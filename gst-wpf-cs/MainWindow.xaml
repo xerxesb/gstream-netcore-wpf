@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:gst_wpf_cs"
+        xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <DockPanel Margin="10" LastChildFill="True">
@@ -12,6 +12,8 @@
             <Button Click="PauseClicked">Pause</Button>
             <Button Click="StopClicked">Stop</Button>
         </StackPanel>
-        <Canvas x:Name="VideoPanel" Background="DarkKhaki"></Canvas>
+        <WindowsFormsHost>
+            <wf:Panel x:Name="VideoPanel"></wf:Panel>
+        </WindowsFormsHost>
     </DockPanel>
 </Window>

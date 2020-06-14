@@ -50,7 +50,7 @@ namespace gst_wpf_cs
 
             InitGStreamerPipeline();
             
-            VideoPanel.SizeChanged += VideoPanelOnSizeChanged;
+            // VideoPanel.SizeChanged += VideoPanelOnSizeChanged;
         }
 
         protected override void OnClosed(EventArgs e)
@@ -61,7 +61,7 @@ namespace gst_wpf_cs
 
         protected override void OnActivated(EventArgs e)
         {
-            _windowHandle = new WindowInteropHelper(System.Windows.Application.Current.MainWindow).Handle;
+            _windowHandle = VideoPanel.Handle;
             base.OnActivated(e);
         }
 
@@ -102,7 +102,7 @@ namespace gst_wpf_cs
             {
                 src["force-aspect-ratio"] = true;
             }
-            catch { }
+            catch { /* ignored */ }
 
             var overlay = (src as Gst.Bin)?.GetByInterface(VideoOverlayAdapter.GType);
             if (overlay == null)
@@ -117,12 +117,12 @@ namespace gst_wpf_cs
 
         private void VideoPanelOnSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            Size size = new Size(this.Width, this.Height);
-            var p = VideoPanel.TransformToAncestor(this).Transform(new Point(0, 0));
-            var s = VideoPanel.RenderSize;
-            _videoRect = ((int) p.X, (int) p.Y, (int) s.Width, (int) s.Height);
-            if (_adapter != null)
-                _adapter.SetRenderRectangle(_videoRect.x, _videoRect.y, _videoRect.w, _videoRect.h);
+            // Size size = new Size(this.Width, this.Height);
+            // var p = VideoPanel.TransformToAncestor(this).Transform(new Point(0, 0));
+            // var s = VideoPanel.RenderSize;
+            // _videoRect = ((int) p.X, (int) p.Y, (int) s.Width, (int) s.Height);
+            // if (_adapter != null)
+            //     _adapter.SetRenderRectangle(_videoRect.x, _videoRect.y, _videoRect.w, _videoRect.h);
         }
 
         private bool RefreshUI()
