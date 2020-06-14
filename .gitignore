@@ -1,0 +1,15 @@
+.ionide
+.idea
+.vs
+.vscode
+*.DotSettings.user
+
+**/bin/*
+**/obj/*
+
+.fake
+
+#Paket dependency manager
+.paket/
+paket-files/
+

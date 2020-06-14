@@ -1,0 +1,4 @@
+This is a sample/test application of using GStreamer in .NETCore.
+
+This is not intended to be a fully robust client, but help test the behaviours and understand the framework for 
+integration in other projects.
