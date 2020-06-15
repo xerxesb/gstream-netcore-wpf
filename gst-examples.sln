@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gst-wpf-cs", "gst-wpf-cs\gst-wpf-cs.csproj", "{041233BF-6D82-4C67-AA67-5C49837014E6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gst-console-cs", "gst-console-cs\gst-console-cs.csproj", "{5CB26E2D-E0DC-46BD-9842-3982B26A5BF5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{041233BF-6D82-4C67-AA67-5C49837014E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{041233BF-6D82-4C67-AA67-5C49837014E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{041233BF-6D82-4C67-AA67-5C49837014E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CB26E2D-E0DC-46BD-9842-3982B26A5BF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CB26E2D-E0DC-46BD-9842-3982B26A5BF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CB26E2D-E0DC-46BD-9842-3982B26A5BF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CB26E2D-E0DC-46BD-9842-3982B26A5BF5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
