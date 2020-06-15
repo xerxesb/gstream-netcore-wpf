@@ -30,8 +30,6 @@ namespace gst_wpf_cs
         private IntPtr _windowHandle;
         private Element _playbin;
         private VideoOverlayAdapter _adapter;
-        private bool _isRender;
-        private (int x, int y, int w, int h) _videoRect;
 
         private const string BusMessageError = "message::error";
         private const string BusMessageEos = "message::eos";
@@ -49,13 +47,13 @@ namespace gst_wpf_cs
             _mainGLibThread.Start();
 
             InitGStreamerPipeline();
-            
-            // VideoPanel.SizeChanged += VideoPanelOnSizeChanged;
         }
 
         protected override void OnClosed(EventArgs e)
         {
-            var x = 1;
+            _playbin.SetState(State.Null);
+            _playbin.Dispose();
+            _mainLoop.Quit();
             base.OnClosed(e);
         }
 
@@ -72,7 +70,7 @@ namespace gst_wpf_cs
             
             _playbin.Connect("video-tags-changed", TagsCb);
             _playbin.Connect("audio-tags-changed", TagsCb);
-            _playbin.Connect("tags-tags-changed", TagsCb);
+            _playbin.Connect("text-tags-changed", TagsCb);
 
             var bus = _playbin.Bus;
             bus.AddSignalWatch();
@@ -83,12 +81,11 @@ namespace gst_wpf_cs
             bus.Connect(BusMessageStateChanged, StateChangedCb);
             bus.Connect(BusMessageApplication, ApplicationCb);
 
-            GLib.Timeout.Add(1, RefreshUI);
+            GLib.Timeout.Add(1000, RefreshPlaybinInfo);
         }
 
         private void OnBusSyncMessage(object o, SyncMessageArgs sargs)
         {
-            // var bus = (Bus) o;
             var message = sargs.Message;
             
             if (!Gst.Video.Global.IsVideoOverlayPrepareWindowHandleMessage(message))
@@ -110,44 +107,73 @@ namespace gst_wpf_cs
             
             _adapter = new VideoOverlayAdapter(overlay.Handle);
             _adapter.WindowHandle = _windowHandle;
-            _adapter.SetRenderRectangle(_videoRect.x, _videoRect.y, _videoRect.w, _videoRect.h);
             _adapter.HandleEvents(true);
-            _isRender = true;
         }
 
-        private void VideoPanelOnSizeChanged(object sender, SizeChangedEventArgs e)
+        private bool RefreshPlaybinInfo()
         {
-            // Size size = new Size(this.Width, this.Height);
-            // var p = VideoPanel.TransformToAncestor(this).Transform(new Point(0, 0));
-            // var s = VideoPanel.RenderSize;
-            // _videoRect = ((int) p.X, (int) p.Y, (int) s.Width, (int) s.Height);
-            // if (_adapter != null)
-            //     _adapter.SetRenderRectangle(_videoRect.x, _videoRect.y, _videoRect.w, _videoRect.h);
-        }
+            _playbin.QueryDuration(Format.Time, out var durationTime);
+            _playbin.QueryPosition(Format.Time, out var pos);
 
-        private bool RefreshUI()
-        {
+            var stateChangeReturn = _playbin.GetState(out var state, out var pending, 100);
+            
+            UpdateUI(
+                pos / Gst.Constants.SECOND,
+                durationTime / Gst.Constants.SECOND,
+                 state 
+            );
+            
             return true;
+        }
+
+        private void UpdateUI(long currTime, long totTime, State state)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                DurationLabel.Content = $"Duration: {currTime}/{totTime} sec";
+                PlaybinStateLabel.Content = $"State [{(state == State.Null ? "Uninitialised" : state.ToString())}]";
+            });
         }
 
         private void TagsCb(object o, SignalArgs args)
         {
+            var playbin = (Gst.Element)o;
+            var s = new Structure("tags-changed");
+            playbin.PostMessage(Gst.Message.NewApplication(playbin, s));
         }
         
         private void ApplicationCb(object o, SignalArgs args)
         {
+            var msg = (Gst.Message) args.Args[0];
+            if (msg.Structure.Name == "tags-changed")
+            {
+                // Handle re-analysis of the streams
+                // See https://github.com/ttustonic/GStreamerSharpSamples/blob/master/WpfSamples/BasicTutorial05.xaml.cs#L173
+                // This may be required when we want to broadcast and select between multiple video streams from the same source
+            }
         }
 
         private void StateChangedCb(object o, SignalArgs args)
         {
+            var msg = (Gst.Message) args.Args[0];
+            msg.ParseStateChanged(out var oldstate, out var newstate, out var pending);
         }
 
         private void EosCb(object o, SignalArgs args)
         {
+            Console.WriteLine("End of stream");
+            _playbin.SetState(State.Ready);
         }
 
         private void ErrorCb(object o, SignalArgs args)
         {
+            var msg = (Gst.Message) args.Args[0];
+            msg.ParseError(out var exc, out var debug);
+            
+            Console.WriteLine($"Error received from element {msg.Src}: {exc.Message}");
+            Console.WriteLine($"Debug info: {debug ?? "None"}");
+
+            _playbin.SetState(State.Ready);
         }
 
         private void PlayClicked(object sender, RoutedEventArgs e)

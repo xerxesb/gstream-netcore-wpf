@@ -7,11 +7,17 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <DockPanel Margin="10" LastChildFill="True">
-        <StackPanel Margin="0 0 0 10" Orientation="Horizontal" DockPanel.Dock="Top">
-            <Button Click="PlayClicked">Play</Button>
-            <Button Click="PauseClicked">Pause</Button>
-            <Button Click="StopClicked">Stop</Button>
-        </StackPanel>
+        <DockPanel Margin="0 0 0 10" DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Click="PlayClicked">Play</Button>
+                <Button Click="PauseClicked">Pause</Button>
+                <Button Click="StopClicked">Stop</Button>
+                <Label Margin="30 0 0 0" x:Name="DurationLabel"></Label>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Label x:Name="PlaybinStateLabel"></Label>
+            </StackPanel>
+        </DockPanel>
         <WindowsFormsHost>
             <wf:Panel x:Name="VideoPanel"></wf:Panel>
         </WindowsFormsHost>
