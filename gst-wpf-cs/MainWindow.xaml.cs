@@ -1,22 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using GLib;
 using Gst;
+using Gst.App;
 using Gst.Video;
-using Application = System.Windows.Application;
 using Thread = System.Threading.Thread;
 
 namespace gst_wpf_cs
@@ -28,8 +15,8 @@ namespace gst_wpf_cs
         private MainLoop _mainLoop;
         private Thread _mainGLibThread;
         private IntPtr _windowHandle;
-        private Element _playbin;
         private VideoOverlayAdapter _adapter;
+        private Pipeline _pipe;
 
         private const string BusMessageError = "message::error";
         private const string BusMessageEos = "message::eos";
@@ -51,8 +38,8 @@ namespace gst_wpf_cs
 
         protected override void OnClosed(EventArgs e)
         {
-            _playbin.SetState(State.Null);
-            _playbin.Dispose();
+            _pipe.SetState(State.Null);
+            _pipe.Dispose();
             _mainLoop.Quit();
             base.OnClosed(e);
         }
@@ -65,14 +52,14 @@ namespace gst_wpf_cs
 
         private void InitGStreamerPipeline()
         {
-            _playbin = ElementFactory.Make("playbin", "playbin");
-            _playbin["uri"] = "http://mirrors.standaloneinstaller.com/video-sample/jellyfish-25-mbps-hd-hevc.mp4";
+            _pipe = (Pipeline) Parse.Launch(
+                "udpsrc port=5004 !  application/x-rtp, encoding-name=JPEG,payload=26 !  rtpjpegdepay ! jpegdec ! timeoverlay halignment=2 ! autovideosink"); 
             
-            _playbin.Connect("video-tags-changed", TagsCb);
-            _playbin.Connect("audio-tags-changed", TagsCb);
-            _playbin.Connect("text-tags-changed", TagsCb);
+            _pipe.Connect("video-tags-changed", TagsCb);
+            _pipe.Connect("audio-tags-changed", TagsCb);
+            _pipe.Connect("text-tags-changed", TagsCb);
 
-            var bus = _playbin.Bus;
+            var bus = _pipe.Bus;
             bus.AddSignalWatch();
             bus.EnableSyncMessageEmission();
             bus.SyncMessage += OnBusSyncMessage;
@@ -101,21 +88,17 @@ namespace gst_wpf_cs
             }
             catch { /* ignored */ }
 
-            var overlay = (src as Gst.Bin)?.GetByInterface(VideoOverlayAdapter.GType);
-            if (overlay == null)
-                return;
-            
-            _adapter = new VideoOverlayAdapter(overlay.Handle);
+            _adapter = new VideoOverlayAdapter(src.Handle);
             _adapter.WindowHandle = _windowHandle;
             _adapter.HandleEvents(true);
         }
 
         private bool RefreshPlaybinInfo()
         {
-            _playbin.QueryDuration(Format.Time, out var durationTime);
-            _playbin.QueryPosition(Format.Time, out var pos);
+            _pipe.QueryDuration(Format.Time, out var durationTime);
+            _pipe.QueryPosition(Format.Time, out var pos);
 
-            var stateChangeReturn = _playbin.GetState(out var state, out var pending, 100);
+            var stateChangeReturn = _pipe.GetState(out var state, out var pending, 100);
             
             UpdateUI(
                 pos / Gst.Constants.SECOND,
@@ -162,7 +145,7 @@ namespace gst_wpf_cs
         private void EosCb(object o, SignalArgs args)
         {
             Console.WriteLine("End of stream");
-            _playbin.SetState(State.Ready);
+            _pipe.SetState(State.Ready);
         }
 
         private void ErrorCb(object o, SignalArgs args)
@@ -173,24 +156,24 @@ namespace gst_wpf_cs
             Console.WriteLine($"Error received from element {msg.Src}: {exc.Message}");
             Console.WriteLine($"Debug info: {debug ?? "None"}");
 
-            _playbin.SetState(State.Ready);
+            _pipe.SetState(State.Ready);
         }
 
         private void PlayClicked(object sender, RoutedEventArgs e)
         {
-            var state = _playbin.SetState(Gst.State.Playing);
+            var state = _pipe.SetState(Gst.State.Playing);
             Console.WriteLine(state.ToString());
         }
 
         private void PauseClicked(object sender, RoutedEventArgs e)
         {
-            var state = _playbin.SetState(Gst.State.Paused);
+            var state = _pipe.SetState(Gst.State.Paused);
             Console.WriteLine(state.ToString());
         }
 
         private void StopClicked(object sender, RoutedEventArgs e)
         {
-            var state = _playbin.SetState(Gst.State.Ready);
+            var state = _pipe.SetState(Gst.State.Ready);
             Console.WriteLine(state.ToString());
         }
     }
